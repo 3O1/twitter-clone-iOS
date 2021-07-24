@@ -43,11 +43,14 @@ final class TestingViewController: UIViewController {
     
     private func setupApollo() {
         NetworkManager.shared.createBasicClient()
-        NetworkManager.shared.apolloClient?.fetch(query: UsersQuery()) { result in
+        NetworkManager.shared.apolloClient?.fetch(query: UsersQuery()) { [weak self] result in
             
             switch result {
             case .success(let graphqlResult):
-                print("DEBUG: \(String(describing: graphqlResult.data))")
+                if let users = graphqlResult.data?.users?.compactMap({ $0 }) {
+                    self?.users.append(contentsOf: users)
+                    self?.tableView.reloadData()
+                }
             case .failure(let error):
                 print("DEBUG:\nERROR: \(error)")
             }
@@ -78,10 +81,12 @@ extension TestingViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        let user = users[indexPath.row]
+        cell.textLabel?.text = "User: \(user.name)) | ID: \(user.id)"
         return cell
     }
         
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+        return users.count
     }
 }
